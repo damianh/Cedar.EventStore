@@ -8,15 +8,14 @@ WORKDIR /repo
 # https://code-maze.com/aspnetcore-app-dockerfiles/
 COPY ./*.sln ./
 
-COPY ./build/ ./build/
-
 COPY ./src/*/*.csproj ./src/
 RUN for file in $(ls src/*.csproj); do mkdir -p ./${file%.*}/ && mv $file ./${file%.*}/; done
 
 COPY ./tests/*/*.csproj ./tests/
 RUN for file in $(ls tests/*.csproj); do mkdir -p ./${file%.*}/ && mv $file ./${file%.*}/; done
 
-RUN dotnet restore
+RUN find src -name "*.csproj"  | xargs -n1 dotnet restore && \
+    find tests -name "*.csproj"  | xargs -n1 dotnet restore
 
 COPY ./assets ./assets/
 
