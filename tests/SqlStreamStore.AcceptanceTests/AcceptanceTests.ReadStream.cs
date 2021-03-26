@@ -372,6 +372,24 @@
             Assert.Equal(streamId, result.Messages[0].StreamId);
         }
 
+        [Fact, Trait("Category", "ReadStream")]
+        public async Task When_reading_a_stream_backwards_that_has_gaps_and_providing_the_fromVersion_explicitly()
+        {
+            var streamId = new StreamId("streamid");
+            var messages = CreateNewStreamMessages(1, 2, 3);
+            var firstMessageId = messages[0].MessageId;
+            var secondMessageId = messages[1].MessageId;
+            var thirdMessageId = messages[2].MessageId;
+
+            var appendResult = await Store.AppendToStream(streamId, ExpectedVersion.Any, messages);
+            await Store.DeleteMessage(streamId, secondMessageId);
+
+            var page = await Store.ReadStreamBackwards(streamId, appendResult.CurrentVersion, 10);
+            page.Messages.Length.ShouldBe(2);
+            page.Messages.First().MessageId.ShouldBe(thirdMessageId);
+            page.Messages.Last().MessageId.ShouldBe(firstMessageId);
+        }
+
         // ReSharper disable once UnusedMethodReturnValue.Global
         public static IEnumerable<object[]> GetReadStreamForwardsTheories()
         {

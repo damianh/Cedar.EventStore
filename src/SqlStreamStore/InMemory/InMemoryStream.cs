@@ -13,7 +13,7 @@ namespace SqlStreamStore.InMemory
         private readonly GetUtcNow _getUtcNow;
         private readonly Action _onStreamAppended;
         private readonly Func<int> _getNextPosition;
-        private readonly List<InMemoryStreamMessage> _messages = new List<InMemoryStreamMessage>();
+        private readonly SortedList<int, InMemoryStreamMessage> _messagesByStreamVersion = new SortedList<int, InMemoryStreamMessage>();
         private readonly Dictionary<Guid, InMemoryStreamMessage> _messagesById = new Dictionary<Guid, InMemoryStreamMessage>();
 
         internal InMemoryStream(
@@ -30,7 +30,13 @@ namespace SqlStreamStore.InMemory
             _getNextPosition = getNextPosition;
         }
 
-        internal IReadOnlyList<InMemoryStreamMessage> Messages => _messages;
+        internal int GetIndexOfStreamVersion(int streamVersion) => _messagesByStreamVersion.IndexOfKey(streamVersion);
+        
+        internal InMemoryStreamMessage GetLastMessage() => _messagesByStreamVersion.Last().Value;
+
+        internal InMemoryStreamMessage GetMessageBasedOnIndex(int index) => _messagesByStreamVersion.Values[index];
+        
+        internal int NumberOfMessages { get { return _messagesByStreamVersion.Count; } }
 
         internal int CurrentVersion { get; private set; } = -1;
 
@@ -69,14 +75,14 @@ namespace SqlStreamStore.InMemory
                 for(int i = 0; i < newMessages.Length; i++)
                 {
                     int index = expectedVersion + i + 1;
-                    if(index >= _messages.Count)
+                    if(index >= _messagesByStreamVersion.Count)
                     {
                         throw new WrongExpectedVersionException(
                             ErrorMessages.AppendFailedWrongExpectedVersion(_streamId, expectedVersion),
                             _streamId,
                             expectedVersion);
                     }
-                    if(_messages[index].MessageId != newMessages[i].MessageId)
+                    if(_messagesByStreamVersion[index].MessageId != newMessages[i].MessageId)
                     {
                         throw new WrongExpectedVersionException(
                             ErrorMessages.AppendFailedWrongExpectedVersion(_streamId, expectedVersion),
@@ -106,8 +112,8 @@ namespace SqlStreamStore.InMemory
                 // idemponcy check - have messages already been written?
                 if(_messagesById.TryGetValue(newMessages[0].MessageId, out var item))
                 {
-                    int i = _messages.IndexOf(item);
-                    if(i + newMessages.Length > _messages.Count)
+                    int i = GetIndexOfStreamVersion(item.StreamVersion);
+                    if(i + newMessages.Length > _messagesByStreamVersion.Count)
                     {
                         throw new WrongExpectedVersionException(
                             ErrorMessages.AppendFailedWrongExpectedVersion(_streamId, expectedVersion),
@@ -117,7 +123,7 @@ namespace SqlStreamStore.InMemory
 
                     for(int n = 1; n < newMessages.Length; n++)
                     {
-                        if(newMessages[n].MessageId != _messages[i + n].MessageId)
+                        if(newMessages[n].MessageId != _messagesByStreamVersion[i + n].MessageId)
                         {
                             throw new WrongExpectedVersionException(
                                 ErrorMessages.AppendFailedWrongExpectedVersion(_streamId, expectedVersion),
@@ -136,10 +142,10 @@ namespace SqlStreamStore.InMemory
 
         private void AppendToStreamExpectedVersionNoStream(int expectedVersion, NewStreamMessage[] newMessages)
         {
-            if(_messages.Count > 0)
+            if(_messagesByStreamVersion.Count > 0)
             {
                 //Already committed Messages, do idempotency check
-                if(newMessages.Length > _messages.Count)
+                if(newMessages.Length > _messagesByStreamVersion.Count)
                 {
                     throw new WrongExpectedVersionException(
                         ErrorMessages.AppendFailedWrongExpectedVersion(_streamId, expectedVersion),
@@ -147,7 +153,7 @@ namespace SqlStreamStore.InMemory
                         expectedVersion);
                 }
 
-                if(newMessages.Where((message, index) => _messages[index].MessageId != message.MessageId).Any())
+                if(newMessages.Where((message, index) => _messagesByStreamVersion[index].MessageId != message.MessageId).Any())
                 {
                     throw new WrongExpectedVersionException(
                         ErrorMessages.AppendFailedWrongExpectedVersion(_streamId, expectedVersion),
@@ -179,8 +185,8 @@ namespace SqlStreamStore.InMemory
                     newmessage.JsonData,
                     newmessage.JsonMetadata);
 
-                _messages.Add(inMemorymessage);
                 _messagesById.Add(newmessage.MessageId, inMemorymessage);
+                _messagesByStreamVersion.Add(inMemorymessage.StreamVersion, inMemorymessage);
                 _inMemoryAllStream.AddAfter(_inMemoryAllStream.Last, inMemorymessage);
             }
             _onStreamAppended();
@@ -196,11 +202,11 @@ namespace SqlStreamStore.InMemory
                    expectedVersion);
             }
 
-            foreach (var inMemorymessage in _messages)
+            foreach (var inMemorymessage in _messagesByStreamVersion)
             {
-                _inMemoryAllStream.Remove(inMemorymessage);
+                _inMemoryAllStream.Remove(inMemorymessage.Value);
             }
-            _messages.Clear();
+            _messagesByStreamVersion.Clear();
             _messagesById.Clear();
         }
 
@@ -211,9 +217,9 @@ namespace SqlStreamStore.InMemory
                 return false;
             }
 
-            _messages.Remove(inMemoryStreamMessage);
             _inMemoryAllStream.Remove(inMemoryStreamMessage);
             _messagesById.Remove(eventId);
+            _messagesByStreamVersion.Remove(inMemoryStreamMessage.StreamVersion);
             return true;
         }
 
