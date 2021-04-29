@@ -1,0 +1,25 @@
+version: 2
+updates:
+- package-ecosystem: nuget
+  directory: "/"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: Microsoft.AspNetCore.TestHost
+    versions:
+    - 5.0.1
+    - 5.0.2
+  - dependency-name: Microsoft.Data.Sqlite
+    versions:
+    - 5.0.1
+    - 5.0.2
+  - dependency-name: Microsoft.NET.Test.Sdk
+    versions:
+    - 16.8.3
+  - dependency-name: Npgsql
+    versions:
+    - 5.0.1.1
+  - dependency-name: Bullseye
+    versions:
+    - 3.5.0
