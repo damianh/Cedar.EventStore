@@ -7,7 +7,7 @@
   <ItemGroup>
     <PackageReference Include="Docker.DotNet" Version="3.125.4" />
     <PackageReference Include="Ductus.FluentDocker" Version="2.7.3" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="2.0.1" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="2.1.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
     <PackageReference Include="MySqlConnector" Version="1.0.1" />
     <PackageReference Include="Npgsql" Version="4.1.5" />
