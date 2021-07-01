@@ -12,7 +12,7 @@
     <EmbeddedResource Include="PgSqlScripts\*.sql" Exclude="bin\**;obj\**;packages\**;@(EmbeddedResource)" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Npgsql" Version="4.1.5" />
+    <PackageReference Include="Npgsql" Version="5.0.7" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SqlStreamStore\SqlStreamStore.csproj" />
