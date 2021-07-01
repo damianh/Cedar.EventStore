@@ -15,7 +15,7 @@
     <EmbeddedResource Include="Scripts\*.sql" Exclude="bin\**;obj\**;packages\**;@(EmbeddedResource)" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="3.1.8" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="5.0.7" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="3.1.9" />
   </ItemGroup>
 
