@@ -210,9 +210,19 @@
         ///     The cancellation instruction.
         /// </param>
         /// <returns>
-        ///     The head position.
+        ///     The head position, or <c>-1</c> if there is none.
         /// </returns>
         Task<long> ReadHeadPosition(CancellationToken cancellationToken = default);
+        /// <summary>
+        ///     Reads the head message (the very latest message).
+        /// </summary>
+        /// <param name="cancellationToken">
+        ///     The cancellation instruction.
+        /// </param>
+        /// <returns>
+        ///     The head message, or <c>null</c> if there is no head message.
+        /// </returns>
+        Task<StreamMessage?> ReadHeadMessage(CancellationToken cancellationToken = default);
 
         /// <summary>
         ///     Reads the head position (the position of the very latest message) of a particular stream.
@@ -241,6 +251,20 @@
         ///     The head version of the stream, or <c>-1</c> if no such stream or an empty stream.
         /// </returns>
         Task<int> ReadStreamHeadVersion(StreamId streamId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        ///     Reads the head message (the very latest message) of a particular stream.
+        /// </summary>
+        /// <param name="streamId">
+        ///     The stream to read the head message of.
+        /// </param>
+        /// <param name="cancellationToken">
+        ///     The cancellation instruction.
+        /// </param>
+        /// <returns>
+        ///     The head message of the stream, or <c>null</c> if no such stream or an empty stream.
+        /// </returns>
+        Task<StreamMessage?> ReadStreamHeadMessage(StreamId streamId, CancellationToken cancellationToken = default);
 
         /// <summary>
         ///     Gets the stream metadata.

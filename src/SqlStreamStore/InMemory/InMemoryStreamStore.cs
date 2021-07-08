@@ -713,6 +713,35 @@ namespace SqlStreamStore
             }
         }
 
+        protected override Task<StreamMessage?> ReadHeadMessageInternal(CancellationToken cancellationToken)
+        {
+            var message = _allStream.LastOrDefault();
+            return message == null 
+                ? Task.FromResult<StreamMessage?>(default) 
+                : Task.FromResult<StreamMessage?>(
+                    new StreamMessage(
+                        message.StreamId, message.MessageId, 
+                        message.StreamVersion, message.Position, 
+                        message.Created, message.Type, 
+                        message.JsonMetadata, message.JsonData));
+        }
+
+        protected override Task<StreamMessage?> ReadStreamHeadMessageInternal(string streamId, CancellationToken cancellationToken)
+        {
+            using(_lock.UseReadLock())
+            {
+                if(!_streams.TryGetValue(streamId, out InMemoryStream stream))
+                    return Task.FromResult<StreamMessage?>(default);
+                var message = stream.Messages[stream.Messages.Count - 1];
+                return Task.FromResult<StreamMessage?>(
+                    new StreamMessage(
+                        message.StreamId, message.MessageId, 
+                        message.StreamVersion, message.Position, 
+                        message.Created, message.Type, 
+                        message.JsonMetadata, message.JsonData));
+            }
+        }
+
         protected override IAllStreamSubscription SubscribeToAllInternal(
             long? fromPosition,
             AllStreamMessageReceived streamMessageReceived,
